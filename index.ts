@@ -5,7 +5,14 @@ import hsk4WordList from "./vocab/hsk-level-4.json"
 import hsk5WordList from "./vocab/hsk-level-5.json"
 import hsk6WordList from "./vocab/hsk-level-6.json"
 
-const levels = [
+type HSKWord = {
+  id: number
+  hanzi: string
+  pinyin: string
+  translations: Array<string>
+}
+
+const levels: Array<{ wordList: Array<HSKWord>; level: number }> = [
   { wordList: hsk1WordList, level: 1 },
   { wordList: hsk2WordList, level: 2 },
   { wordList: hsk3WordList, level: 3 },
@@ -16,18 +23,18 @@ const levels = [
 
 export async function grade(sentence: string) {
   const levelFreqCount = {
-    1: 0,
-    2: 0,
-    3: 0,
-    4: 0,
-    5: 0,
-    6: 0,
+    "1": 0,
+    "2": 0,
+    "3": 0,
+    "4": 0,
+    "5": 0,
+    "6": 0,
   }
 
-  for (const level of levels) {
-    for (const word of level.wordList) {
+  for (const { wordList, level } of levels) {
+    for (const word of wordList) {
       if (sentence.includes(word.hanzi)) {
-        levelFreqCount[level.level] += 1
+        ;(levelFreqCount as any)[level.toString()] += 1
       }
     }
   }
