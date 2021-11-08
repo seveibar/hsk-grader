@@ -1,0 +1,17 @@
+{
+  "name": "hsk-grader",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "test": "ava",
+    "build": "tsup --minify --dts ./index.ts"
+  },
+  "devDependencies": {
+    "@ava/typescript": "^3.0.0",
+    "ava": "^3.15.0",
+    "esbuild": "^0.13.12",
+    "esbuild-runner": "^2.2.1",
+    "tsup": "^5.6.0"
+  }
+}
