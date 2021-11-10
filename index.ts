@@ -12,7 +12,7 @@ type HSKWord = {
   translations: Array<string>
 }
 
-const levels: Array<{ wordList: Array<HSKWord>; level: number }> = [
+export const levels: Array<{ wordList: Array<HSKWord>; level: number }> = [
   { wordList: hsk1WordList, level: 1 },
   { wordList: hsk2WordList, level: 2 },
   { wordList: hsk3WordList, level: 3 },
