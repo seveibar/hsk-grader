@@ -1,5 +1,5 @@
 import test from "ava"
-import grade from "../"
+import { getDefinitions } from "../index"
 
 // The grades here are mostly just frozen. The snippets are extremely random.
 
@@ -13,8 +13,8 @@ const sentences = [
 ]
 
 for (const sentence of sentences) {
-  test(`grade ${sentence}`, async (t) => {
-    console.log(sentence, await grade(sentence))
+  test(`get definitions for ${sentence}`, async (t) => {
+    console.log(sentence, await getDefinitions(sentence))
     t.pass()
   })
 }

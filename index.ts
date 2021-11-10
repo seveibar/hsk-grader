@@ -21,6 +21,35 @@ export const levels: Array<{ wordList: Array<HSKWord>; level: number }> = [
   { wordList: hsk6WordList, level: 6 },
 ]
 
+export const hskHanziWordMap: { [hanzi: string]: HSKWord } = {}
+for (const level of levels) {
+  for (const word of level.wordList) {
+    hskHanziWordMap[word.hanzi] = word
+  }
+}
+export const hskHanziSet = new Set(Object.keys(hskHanziWordMap))
+
+export const getDefinitions = (hanziPhrase: string) => {
+  const ogHanziPhrase = hanziPhrase
+  const definitions = []
+  let searchLength = 4
+  while (searchLength > 0) {
+    // Find all hanzi definitions with searchLength size, if found remove
+    for (let i = 0; i < hanziPhrase.length - searchLength; i++) {
+      const searchPhrase = hanziPhrase.substr(i, searchLength)
+      if (hskHanziSet.has(searchPhrase)) {
+        hanziPhrase = hanziPhrase.replace(new RegExp(searchPhrase, "g"), "")
+        definitions.push({
+          ...hskHanziWordMap[searchPhrase],
+          order: ogHanziPhrase.indexOf(searchPhrase),
+        })
+      }
+    }
+    searchLength -= 1
+  }
+  return definitions.sort((a, b) => a.order - b.order)
+}
+
 export async function grade(sentence: string) {
   const levelFreqCount = {
     "1": 0,
