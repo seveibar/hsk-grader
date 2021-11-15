@@ -14,7 +14,6 @@ const sentences = [
 
 for (const sentence of sentences) {
   test(`get definitions for ${sentence}`, async (t) => {
-    console.log(sentence, await getDefinitions(sentence))
     t.pass()
   })
 }
