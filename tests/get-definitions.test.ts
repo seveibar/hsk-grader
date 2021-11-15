@@ -1,8 +1,6 @@
 import test from "ava"
 import { getDefinitions } from "../index"
 
-// The grades here are mostly just frozen. The snippets are extremely random.
-
 const sentences = [
   "他喜欢吹牛。",
   "我们明天将一起吃午饭。",
@@ -14,6 +12,8 @@ const sentences = [
 
 for (const sentence of sentences) {
   test(`get definitions for ${sentence}`, async (t) => {
-    t.pass()
+    console.log("starting ", sentence)
+    const defs = await getDefinitions(sentence)
+    t.pass(`${sentence} => ${defs.length} definitions`)
   })
 }

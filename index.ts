@@ -5,6 +5,8 @@ import hsk4WordList from "./vocab/hsk-level-4.json"
 import hsk5WordList from "./vocab/hsk-level-5.json"
 import hsk6WordList from "./vocab/hsk-level-6.json"
 import mdbg from "mdbg"
+import axios from "axios"
+import { Mutex } from "async-mutex"
 
 type HSKWord = {
   id: number
@@ -17,6 +19,7 @@ type HSKWord = {
 type DictionaryWord = {
   traditional: string
   simplified: string
+  pinyin: string
   translations: Array<string>
   hsk?: number
 }
@@ -38,12 +41,27 @@ for (const level of levels) {
 }
 export const hskHanziSet = new Set(Object.keys(hskHanziWordMap))
 
+export const localPinyinCache = {}
+export const getPinyin = async (hanziPhrase: string): Promise<string> => {
+  if (localPinyinCache[hanziPhrase]) return localPinyinCache[hanziPhrase]
+  if (!hanziPhrase) return ""
+  const { data: pinyin } = await axios.get(
+    // Run pinyin api locally for more speeeeed
+    // `http://localhost:3000/api?hanzi=${encodeURIComponent(subtitle[cnKey])}`
+    `https://pinyin.seve.blog/api?hanzi=${encodeURIComponent(hanziPhrase)}`
+  )
+  localPinyinCache[hanziPhrase] = pinyin
+  return pinyin
+}
+
+const dictionaryMutex = new Mutex()
 export const getDefinition = async (
   hanziPhrase: string
 ): Promise<DictionaryWord | null> => {
+  const releaseMutex = await dictionaryMutex.acquire()
   const dictDef = await mdbg.getByHanzi(hanziPhrase).catch((e) => null)
+  releaseMutex()
   if (hskHanziSet.has(hanziPhrase) || dictDef) {
-    hanziPhrase = hanziPhrase.replace(new RegExp(hanziPhrase, "g"), "")
     const def = hskHanziWordMap[hanziPhrase] || { ...dictDef }
     if ((def as any).definitions) {
       def.translations = (
@@ -51,6 +69,7 @@ export const getDefinition = async (
       ).flatMap((a: any) => a.translations)
       delete (def as any).definitions
     }
+    def.pinyin = await getPinyin(hanziPhrase)
     return def
   }
   return null
