@@ -7,6 +7,7 @@ import hsk6WordList from "./vocab/hsk-level-6.json"
 import mdbg from "mdbg"
 import axios from "axios"
 import { Mutex } from "async-mutex"
+import { readFile, writeFile } from "fs/promises"
 
 type HSKWord = {
   id: number
@@ -41,16 +42,38 @@ for (const level of levels) {
 }
 export const hskHanziSet = new Set(Object.keys(hskHanziWordMap))
 
-export const localPinyinCache = {}
+let localPinyinCache = null,
+  newlyCachedPinyinCount = 0
 export const getPinyin = async (hanziPhrase: string): Promise<string> => {
+  if (!localPinyinCache) {
+    if (process.env.PINYIN_CACHE_PATH) {
+      try {
+        localPinyinCache = JSON.parse(
+          (await readFile(process.env.PINYIN_CACHE_PATH)).toString()
+        )
+      } catch (e) {
+        localPinyinCache = {}
+      }
+    } else {
+      localPinyinCache = {}
+    }
+  }
   if (localPinyinCache[hanziPhrase]) return localPinyinCache[hanziPhrase]
   if (!hanziPhrase) return ""
   const { data: pinyin } = await axios.get(
     // Run pinyin api locally for more speeeeed
-    // `http://localhost:3000/api?hanzi=${encodeURIComponent(subtitle[cnKey])}`
-    `https://pinyin.seve.blog/api?hanzi=${encodeURIComponent(hanziPhrase)}`
+    `${
+      process.env.PINYIN_API_URL || "https://pinyin.seve.blog"
+    }/api?hanzi=${encodeURIComponent(hanziPhrase)}`
   )
   localPinyinCache[hanziPhrase] = pinyin
+  newlyCachedPinyinCount += 1
+  if (newlyCachedPinyinCount % 100 === 0) {
+    await writeFile(
+      process.env.PINYIN_CACHE_PATH,
+      JSON.stringify(localPinyinCache)
+    )
+  }
   return pinyin
 }
 
@@ -62,14 +85,17 @@ export const getDefinition = async (
   const dictDef = await mdbg.getByHanzi(hanziPhrase).catch((e) => null)
   releaseMutex()
   if (hskHanziSet.has(hanziPhrase) || dictDef) {
-    const def = hskHanziWordMap[hanziPhrase] || { ...dictDef }
+    const def = { ...dictDef, ...hskHanziWordMap[hanziPhrase] }
+    delete def.hanzi
     if ((def as any).definitions) {
       def.translations = (
         Object.values((def as any).definitions) as any
       ).flatMap((a: any) => a.translations)
       delete (def as any).definitions
     }
-    def.pinyin = await getPinyin(hanziPhrase)
+    if (!def.pinyin) {
+      def.pinyin = await getPinyin(hanziPhrase)
+    }
     return def
   }
   return null

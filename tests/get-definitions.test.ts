@@ -12,8 +12,8 @@ const sentences = [
 
 for (const sentence of sentences) {
   test(`get definitions for ${sentence}`, async (t) => {
-    console.log("starting ", sentence)
     const defs = await getDefinitions(sentence)
+    console.log(`${sentence} => ${defs.length} definitions`)
     t.pass(`${sentence} => ${defs.length} definitions`)
   })
 }
